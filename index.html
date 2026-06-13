@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Apocrypha Builder</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <style>
       :root {
         --bg-color: #0b0c10;
@@ -401,36 +401,6 @@
         line-height: 1.4;
       }
 
-      .tt-actions {
-        display: flex;
-        gap: 8px;
-        padding: 10px 14px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(10, 10, 12, 0.95);
-        pointer-events: auto;
-      }
-      .tt-btn {
-        flex: 1;
-        padding: 8px 0;
-        background: transparent;
-        border: 1px solid #555;
-        color: #ccc;
-        cursor: pointer;
-        font-family: "Georgia", serif;
-        font-size: 13px;
-        border-radius: 2px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .tt-btn.unlock {
-        border-color: var(--stat-green);
-        color: var(--stat-green);
-      }
-      .tt-btn.refund {
-        border-color: #ff3333;
-        color: #ff3333;
-      }
-
       @media (max-width: 768px) {
         #stats-ui {
           top: 10px;
@@ -475,6 +445,30 @@
           width: 90vw !important;
           z-index: 1000;
           pointer-events: auto !important;
+        }
+
+        .game-panel {
+          backdrop-filter: none;
+          box-shadow: none;
+        }
+        .skill-node {
+          transition:
+            transform 0.2s,
+            border-color 0.2s,
+            background 0.2s;
+        }
+        .skill-node.wave-glow {
+          box-shadow: none;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        .connection-line {
+          transition: stroke 0.2s;
+        }
+        .connection-line.active-line {
+          filter: none;
+        }
+        .connection-line.wave-glow-line {
+          filter: none;
         }
       }
     </style>
@@ -552,10 +546,9 @@
       let build = {};
       let totalPoints = 0;
       let hoverTimer = null;
-
-      function isMobile() {
-        return window.matchMedia("(hover: none), (pointer: coarse)").matches;
-      }
+      let mobileSelectedNode = null;
+      let startX = 0,
+        startY = 0;
 
       function hexToRgba(hex, alpha) {
         if (!hex || hex[0] !== "#") return `rgba(255,255,255,${alpha})`;
@@ -617,14 +610,27 @@
           el.addEventListener("dblclick", (e) => e.stopPropagation());
         });
 
-      document.getElementById("viewport").addEventListener("click", (e) => {
+      document
+        .getElementById("viewport")
+        .addEventListener("pointerdown", (e) => {
+          startX = e.clientX;
+          startY = e.clientY;
+        });
+
+      document.getElementById("viewport").addEventListener("pointerup", (e) => {
         if (
-          isMobile() &&
+          (e.pointerType === "touch" || e.pointerType === "pen") &&
           !e.target.closest(".skill-node") &&
           !e.target.closest("#tooltip")
         ) {
-          hideTooltip();
-          clearWave();
+          let dist = Math.sqrt(
+            Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2),
+          );
+          if (dist < 10) {
+            hideTooltip();
+            clearWave();
+            mobileSelectedNode = null;
+          }
         }
       });
 
@@ -683,27 +689,34 @@
           );
 
           node.innerHTML = `
-          <div class="node-corner c-tl"></div><div class="node-corner c-tr"></div>
-          <div class="node-corner c-bl"></div><div class="node-corner c-br"></div>
-          <div class="skill-name" style="font-size: ${fSize}px;">${skill.name}</div>
-        `;
+        <div class="node-corner c-tl"></div><div class="node-corner c-tr"></div>
+        <div class="node-corner c-bl"></div><div class="node-corner c-br"></div>
+        <div class="skill-name" style="font-size: ${fSize}px;">${skill.name}</div>
+      `;
 
-          node.addEventListener("click", (e) => {
-            if (isMobile()) {
-              showTooltip(e, id, false);
-              startWave(id);
+          node.addEventListener("pointerup", (e) => {
+            let dist = Math.sqrt(
+              Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2),
+            );
+            if (dist < 10) {
+              if (e.pointerType === "touch" || e.pointerType === "pen") {
+                if (mobileSelectedNode !== id) {
+                  mobileSelectedNode = id;
+                  showTooltip(e, id, false);
+                  startWave(id);
+                } else {
+                  if (!build[id]) allocatePoint(id);
+                  else deallocatePoint(id);
+                }
+              } else {
+                if (e.button === 0) allocatePoint(id);
+                if (e.button === 2) deallocatePoint(id);
+              }
             }
           });
 
-          node.addEventListener("mousedown", (e) => {
-            if (!isMobile()) {
-              if (e.button === 0) allocatePoint(id);
-              if (e.button === 2) deallocatePoint(id);
-            }
-          });
-
-          node.addEventListener("mouseenter", (e) => {
-            if (!isMobile()) {
+          node.addEventListener("pointerenter", (e) => {
+            if (e.pointerType === "mouse") {
               showTooltip(e, id);
               hoverTimer = setTimeout(() => {
                 startWave(id);
@@ -711,8 +724,8 @@
             }
           });
 
-          node.addEventListener("mouseleave", () => {
-            if (!isMobile()) {
+          node.addEventListener("pointerleave", (e) => {
+            if (e.pointerType === "mouse") {
               clearTimeout(hoverTimer);
               hideTooltip();
               clearWave();
@@ -945,36 +958,36 @@
         let masteryColorClass = !build[id] && notEnoughPoints ? "red-text" : "";
 
         let html = `
-        <div class="tt-row">
-          <span class="tt-key">Skill</span>
-          <span class="tt-val">${skill.name}</span>
-        </div>
-      `;
+      <div class="tt-row">
+        <span class="tt-key">Skill</span>
+        <span class="tt-val">${skill.name}</span>
+      </div>
+    `;
 
         if (skill.level) {
           html += `
-          <div class="tt-row">
-            <span class="tt-key">Level</span>
-            <span class="tt-val">${skill.level}</span>
-          </div>
-        `;
+        <div class="tt-row">
+          <span class="tt-key">Level</span>
+          <span class="tt-val">${skill.level}</span>
+        </div>
+      `;
         }
 
         if (id !== "sigil") {
           html += `
-          <div class="tt-row">
-            <span class="tt-key">Mastery</span>
-            <span class="tt-val ${masteryColorClass}">${skill.cost}</span>
-          </div>
-        `;
+        <div class="tt-row">
+          <span class="tt-key">Mastery</span>
+          <span class="tt-val ${masteryColorClass}">${skill.cost}</span>
+        </div>
+      `;
         }
 
         html += `
-        <div class="tt-col">
-          <span class="tt-key">Description</span>
-          <span class="tt-desc-text">${skill.desc}</span>
-        </div>
-      `;
+      <div class="tt-col">
+        <span class="tt-key">Description</span>
+        <span class="tt-desc-text">${skill.desc}</span>
+      </div>
+    `;
 
         if (skill.stats) {
           for (let statName in skill.stats) {
@@ -985,28 +998,29 @@
               val = val + "%";
             }
             html += `
-            <div class="tt-row">
-              <span class="tt-key">${key}</span>
-              <span class="tt-val">${val}</span>
-            </div>
-          `;
+          <div class="tt-row">
+            <span class="tt-key">${key}</span>
+            <span class="tt-val">${val}</span>
+          </div>
+        `;
           }
         }
 
-        if (isMobile()) {
-          html += `
-          <div class="tt-actions">
-            <button class="tt-btn unlock" onclick="allocatePoint('${id}')">Unlock</button>
-            <button class="tt-btn refund" onclick="deallocatePoint('${id}')">Refund</button>
-            <button class="tt-btn" onclick="hideTooltip(); clearWave();">Close</button>
-          </div>
-        `;
+        if (skill.abilities) {
+          skill.abilities.forEach((ab) => {
+            html += `
+            <div class="tt-row">
+              <span class="tt-key">Ability</span>
+              <span class="tt-val" style="color: ${skill.color}; font-weight: bold;">${ab}</span>
+            </div>
+          `;
+          });
         }
 
         document.getElementById("tooltip-content").innerHTML = html;
         tooltip.style.display = "block";
 
-        if (!isRefresh && e && !isMobile()) moveTooltip(e);
+        if (!isRefresh && e) moveTooltip(e);
       }
 
       function moveTooltip(e) {
@@ -1025,8 +1039,9 @@
         tooltip.style.display = "none";
       }
 
-      nodesLayer.addEventListener("mousemove", (e) => {
-        if (tooltip.style.display === "block" && !isMobile()) moveTooltip(e);
+      nodesLayer.addEventListener("pointermove", (e) => {
+        if (tooltip.style.display === "block" && e.pointerType === "mouse")
+          moveTooltip(e);
       });
 
       initTree();
