@@ -974,7 +974,7 @@ const SKILLS = {
     cost: 1,
     req: ["mobility_b"],
     color: "#232a5c",
-    desc: "Nil",
+    desc: "Terragen race exclusive.<br>Press Q to dash swiftly across walls and ledges.",
   },
   lightfooted: {
     name: "LightFooted",
