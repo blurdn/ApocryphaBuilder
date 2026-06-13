@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apocrypha Builder</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+    <style>
+      :root {
+        --bg-color: #0b0c10;
+        --panel-bg: rgba(15, 15, 18, 0.95);
+        --text-main: #cccccc;
+        --text-muted: #888888;
+        --line-inactive: #22252a;
+        --node-bg: rgba(10, 10, 12, 0.95);
+        --border-outer: #4a4a4a;
+        --border-inner: #1a1a1a;
+        --stat-green: #4af2a1;
+        --ability-cyan: #00bcd4;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-color);
+        background-image: radial-gradient(
+          circle at center,
+          #15181f 0%,
+          #050608 100%
+        );
+        color: var(--text-main);
+        font-family: "Georgia", serif;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-panel {
+        position: absolute;
+        background: var(--panel-bg);
+        border: 2px solid var(--border-outer);
+        box-shadow:
+          inset 0 0 0 2px var(--border-inner),
+          0 10px 25px rgba(0, 0, 0, 0.9);
+        padding: 12px 18px;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+        box-sizing: border-box;
+      }
+
+      .panel-corner {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border: 1px solid #777;
+      }
+      .pc-tl {
+        top: 3px;
+        left: 3px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .pc-tr {
+        top: 3px;
+        right: 3px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .pc-bl {
+        bottom: 3px;
+        left: 3px;
+        border-right: none;
+        border-top: none;
+      }
+      .pc-br {
+        bottom: 3px;
+        right: 3px;
+        border-left: none;
+        border-top: none;
+      }
+
+      #stats-ui {
+        top: 20px;
+        right: 20px;
+        min-width: 220px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .stats-title {
+        font-size: 16px;
+        color: #fff;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 8px;
+        font-style: normal;
+        flex-shrink: 0;
+      }
+      #stats-scroll-area {
+        overflow-y: auto;
+        padding-right: 4px;
+        flex-grow: 1;
+      }
+      #stats-scroll-area::-webkit-scrollbar {
+        width: 4px;
+      }
+      #stats-scroll-area::-webkit-scrollbar-thumb {
+        background: #4a4a4a;
+        border-radius: 4px;
+      }
+
+      .stat-line {
+        font-size: 14px;
+        color: #e2e8f0;
+        margin-bottom: 5px;
+      }
+      .stats-divider {
+        height: 1px;
+        background: #333;
+        margin: 10px 0;
+      }
+      .ability-line {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+      }
+      .empty-stats {
+        font-size: 13px;
+        color: #666;
+        font-style: italic;
+      }
+
+      #mastery-ui {
+        position: absolute;
+        bottom: 25px;
+        left: 25px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        color: #f2f2f2;
+        padding: 12px 18px;
+        font-family: "Georgia", serif;
+        background: rgba(12, 12, 14, 0.75);
+      }
+      .bracket-tl,
+      .bracket-tr,
+      .bracket-bl,
+      .bracket-br {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border: 2px solid #ccc;
+      }
+      .bracket-tl {
+        top: 0;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+      }
+      .bracket-tr {
+        top: 0;
+        right: 0;
+        border-left: none;
+        border-bottom: none;
+      }
+      .bracket-bl {
+        bottom: 0;
+        left: 0;
+        border-right: none;
+        border-top: none;
+      }
+      .bracket-br {
+        bottom: 0;
+        right: 0;
+        border-left: none;
+        border-top: none;
+      }
+
+      #controls-ui {
+        bottom: 20px;
+        right: 20px;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.6;
+        text-align: right;
+        width: 280px;
+      }
+      .btn-game {
+        background: transparent;
+        border: 1px solid #555;
+        color: #ccc;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-family: "Georgia", serif;
+        font-style: italic;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+      .btn-game:hover {
+        border-color: #fff;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      #viewport {
+        width: 100vw;
+        height: 100vh;
+        cursor: grab;
+      }
+      #viewport:active {
+        cursor: grabbing;
+      }
+      #tree-canvas {
+        width: 4000px;
+        height: 4000px;
+        position: absolute;
+        transform-origin: 0 0;
+      }
+
+      #connections-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .connection-line {
+        stroke: var(--line-inactive);
+        stroke-width: 2px;
+        transition:
+          stroke 0.4s ease-out,
+          filter 0.4s ease-out,
+          stroke-width 0.4s ease-out;
+      }
+      .connection-line.active-line {
+        stroke-width: 4px;
+        filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8)) brightness(0.65);
+      }
+      .connection-line.wave-glow-line {
+        stroke-width: 4px;
+        stroke: var(--line-color);
+        filter: drop-shadow(0 0 8px var(--line-color)) brightness(1);
+      }
+
+      #nodes-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+      }
+
+      .skill-node {
+        position: absolute;
+        width: 62px;
+        height: 62px;
+        background: var(--node-bg);
+        border: 1px solid #3a3f47;
+        transform: translate(-50%, -50%) scale(1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition:
+          transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+          border-color 0.4s ease,
+          box-shadow 0.4s ease,
+          background 0.4s ease;
+      }
+
+      .skill-name {
+        text-align: center;
+        color: #666;
+        padding: 0 2px;
+        pointer-events: none;
+        line-height: 1.1;
+        transition:
+          color 0.4s ease,
+          text-shadow 0.4s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow-wrap: normal;
+        word-break: normal;
+      }
+
+      .skill-node.active {
+        border-color: var(--node-color);
+        background:
+          linear-gradient(var(--node-bg-active), var(--node-bg-active)),
+          var(--node-bg);
+      }
+      .skill-node.active .skill-name {
+        color: #fff;
+      }
+      .skill-node.active .node-corner {
+        border-color: var(--node-color);
+      }
+
+      .skill-node.wave-glow {
+        transform: translate(-50%, -50%) scale(1.15);
+        border-color: var(--node-color);
+        box-shadow:
+          0 0 20px var(--node-color),
+          inset 0 0 10px rgba(255, 255, 255, 0.05);
+        z-index: 10;
+        background:
+          linear-gradient(var(--node-bg-active), var(--node-bg-active)),
+          var(--node-bg);
+      }
+      .skill-node.wave-glow .skill-name {
+        color: #fff;
+        text-shadow: 0 0 8px var(--node-color);
+      }
+
+      .node-corner {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border: 1px solid #3a3f47;
+        pointer-events: none;
+        transition: border-color 0.4s ease;
+      }
+      .c-tl {
+        top: 2px;
+        left: 2px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .c-tr {
+        top: 2px;
+        right: 2px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .c-bl {
+        bottom: 2px;
+        left: 2px;
+        border-right: none;
+        border-top: none;
+      }
+      .c-br {
+        bottom: 2px;
+        right: 2px;
+        border-left: none;
+        border-top: none;
+      }
+
+      #tooltip {
+        position: fixed;
+        z-index: 100;
+        pointer-events: none;
+        display: none;
+        width: 260px;
+        background: rgba(20, 22, 25, 0.98);
+        border: 1px solid #4a4a4a;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .tt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .tt-row:last-child {
+        border-bottom: none;
+      }
+      .tt-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .tt-key {
+        font-style: italic;
+        color: #a3a3a3;
+        font-size: 14px;
+      }
+      .tt-val {
+        color: #f2f2f2;
+        font-size: 14px;
+        text-align: right;
+      }
+      .tt-val.red-text {
+        color: #ff3333;
+      }
+      .tt-desc-text {
+        font-style: italic;
+        color: #f2f2f2;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .tt-actions {
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(10, 10, 12, 0.95);
+        pointer-events: auto;
+      }
+      .tt-btn {
+        flex: 1;
+        padding: 8px 0;
+        background: transparent;
+        border: 1px solid #555;
+        color: #ccc;
+        cursor: pointer;
+        font-family: "Georgia", serif;
+        font-size: 13px;
+        border-radius: 2px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .tt-btn.unlock {
+        border-color: var(--stat-green);
+        color: var(--stat-green);
+      }
+      .tt-btn.refund {
+        border-color: #ff3333;
+        color: #ff3333;
+      }
+
+      @media (max-width: 768px) {
+        #stats-ui {
+          top: 10px;
+          right: 10px;
+          max-height: 25vh;
+          min-width: 140px;
+          padding: 8px 12px;
+        }
+        .stats-title {
+          font-size: 14px;
+          margin-bottom: 6px;
+          padding-bottom: 4px;
+        }
+        .stat-line,
+        .ability-line {
+          font-size: 12px;
+        }
+
+        #mastery-ui {
+          bottom: 75px;
+          left: 10px;
+          font-size: 15px;
+          padding: 8px 12px;
+        }
+
+        #controls-ui {
+          bottom: 10px;
+          right: 10px;
+          left: 10px;
+          width: auto;
+          padding: 8px 12px;
+        }
+        .mobile-hide {
+          display: none !important;
+        }
+
+        #tooltip {
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          bottom: 130px !important;
+          top: auto !important;
+          width: 90vw !important;
+          z-index: 1000;
+          pointer-events: auto !important;
+        }
+      }
+    </style>
+    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+    <script src="skills.js"></script>
+  </head>
+  <body>
+    <div id="stats-ui" class="game-panel">
+      <div class="panel-corner pc-tl"></div>
+      <div class="panel-corner pc-tr"></div>
+      <div class="panel-corner pc-bl"></div>
+      <div class="panel-corner pc-br"></div>
+      <div class="stats-title">Build Bonuses</div>
+      <div id="stats-scroll-area">
+        <div id="stats-content"></div>
+      </div>
+    </div>
+
+    <div id="mastery-ui">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+      <span id="spent-points" style="font-weight: bold; margin-right: 4px"
+        >0</span
+      >
+      / 50 Mastery
+    </div>
+
+    <div id="controls-ui" class="game-panel">
+      <div class="panel-corner pc-tl"></div>
+      <div class="panel-corner pc-tr"></div>
+      <div class="panel-corner pc-bl"></div>
+      <div class="panel-corner pc-br"></div>
+      <div class="mobile-hide" style="margin-bottom: 10px; text-align: center">
+        LMB: Unlock | RMB: Cancel unlock
+      </div>
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <button class="btn-game" onclick="unlockAll()" style="margin: 0">
+          Unlock All
+        </button>
+        <button class="btn-game" onclick="resetBuild()" style="margin: 0">
+          Reset Tree
+        </button>
+      </div>
+    </div>
+
+    <div id="viewport">
+      <div id="tree-canvas">
+        <svg id="connections-svg"></svg>
+        <div id="nodes-container"></div>
+      </div>
+    </div>
+
+    <div id="tooltip">
+      <div class="panel-corner pc-tl"></div>
+      <div class="panel-corner pc-tr"></div>
+      <div class="panel-corner pc-bl"></div>
+      <div class="panel-corner pc-br"></div>
+      <div id="tooltip-content"></div>
+    </div>
+
+    <script>
+      const MAX_POINTS = 50;
+      const GRID_SIZE = 55;
+      const CENTER_X = 2000;
+      const CENTER_Y = 2000;
+
+      let build = {};
+      let totalPoints = 0;
+      let hoverTimer = null;
+
+      function isMobile() {
+        return window.matchMedia("(hover: none), (pointer: coarse)").matches;
+      }
+
+      function hexToRgba(hex, alpha) {
+        if (!hex || hex[0] !== "#") return `rgba(255,255,255,${alpha})`;
+        let r = parseInt(hex.slice(1, 3), 16),
+          g = parseInt(hex.slice(3, 5), 16),
+          b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      Object.keys(SKILLS).forEach((id) => (SKILLS[id].children = []));
+      Object.keys(SKILLS).forEach((id) => {
+        SKILLS[id].req.forEach((parentId) => {
+          if (SKILLS[parentId]) SKILLS[parentId].children.push(id);
+        });
+      });
+
+      const canvas = document.getElementById("tree-canvas");
+      const svgLayer = document.getElementById("connections-svg");
+      const nodesLayer = document.getElementById("nodes-container");
+      const tooltip = document.getElementById("tooltip");
+
+      const pz = panzoom(canvas, {
+        maxZoom: 2.0,
+        minZoom: 0.2,
+        initialZoom: 0.85,
+        bounds: true,
+        beforeWheel: function (e) {
+          return false;
+        },
+        filterKey: function () {
+          return true;
+        },
+      });
+
+      setTimeout(() => {
+        const vRect = document
+          .getElementById("viewport")
+          .getBoundingClientRect();
+        pz.moveTo(
+          vRect.width / 2 - CENTER_X * 0.85,
+          vRect.height / 2 - CENTER_Y * 0.85,
+        );
+      }, 50);
+
+      document.addEventListener("contextmenu", (event) =>
+        event.preventDefault(),
+      );
+
+      document
+        .querySelectorAll(".game-panel, #mastery-ui, #tooltip")
+        .forEach((el) => {
+          el.addEventListener("mousedown", (e) => e.stopPropagation());
+          el.addEventListener("touchstart", (e) => e.stopPropagation(), {
+            passive: false,
+          });
+          el.addEventListener("wheel", (e) => e.stopPropagation(), {
+            passive: false,
+          });
+          el.addEventListener("dblclick", (e) => e.stopPropagation());
+        });
+
+      document.getElementById("viewport").addEventListener("click", (e) => {
+        if (
+          isMobile() &&
+          !e.target.closest(".skill-node") &&
+          !e.target.closest("#tooltip")
+        ) {
+          hideTooltip();
+          clearWave();
+        }
+      });
+
+      function initTree() {
+        svgLayer.innerHTML = "";
+        nodesLayer.innerHTML = "";
+
+        Object.keys(SKILLS).forEach((id) => {
+          const skill = SKILLS[id];
+          const px = CENTER_X + skill.x * GRID_SIZE;
+          const py = CENTER_Y - skill.y * GRID_SIZE;
+
+          skill.req.forEach((parentId) => {
+            const parent = SKILLS[parentId];
+            const p_px = CENTER_X + parent.x * GRID_SIZE;
+            const p_py = CENTER_Y - parent.y * GRID_SIZE;
+
+            const line = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "line",
+            );
+            line.setAttribute("x1", p_px);
+            line.setAttribute("y1", p_py);
+            line.setAttribute("x2", px);
+            line.setAttribute("y2", py);
+            line.setAttribute("class", "connection-line");
+            line.setAttribute("id", `line-${parentId}-${id}`);
+            line.setAttribute("data-parent", parentId);
+            line.setAttribute("data-child", id);
+
+            let isCenter = parentId === "sigil";
+            line.style.setProperty(
+              "--line-color",
+              isCenter ? skill.color : parent.color,
+            );
+            svgLayer.appendChild(line);
+          });
+
+          let fSize = 12.5;
+          let words = skill.name.split(" ");
+          let maxWordLen = Math.max(...words.map((w) => w.length));
+
+          if (maxWordLen > 8) fSize = 11;
+          if (maxWordLen > 10) fSize = 9.5;
+          if (maxWordLen > 12) fSize = 8;
+
+          const node = document.createElement("div");
+          node.className = "skill-node";
+          node.id = `node-${id}`;
+          node.style.left = `${px}px`;
+          node.style.top = `${py}px`;
+          node.style.setProperty("--node-color", skill.color);
+          node.style.setProperty(
+            "--node-bg-active",
+            hexToRgba(skill.color, 0.2),
+          );
+
+          node.innerHTML = `
+          <div class="node-corner c-tl"></div><div class="node-corner c-tr"></div>
+          <div class="node-corner c-bl"></div><div class="node-corner c-br"></div>
+          <div class="skill-name" style="font-size: ${fSize}px;">${skill.name}</div>
+        `;
+
+          node.addEventListener("click", (e) => {
+            if (isMobile()) {
+              showTooltip(e, id, false);
+              startWave(id);
+            }
+          });
+
+          node.addEventListener("mousedown", (e) => {
+            if (!isMobile()) {
+              if (e.button === 0) allocatePoint(id);
+              if (e.button === 2) deallocatePoint(id);
+            }
+          });
+
+          node.addEventListener("mouseenter", (e) => {
+            if (!isMobile()) {
+              showTooltip(e, id);
+              hoverTimer = setTimeout(() => {
+                startWave(id);
+              }, 150);
+            }
+          });
+
+          node.addEventListener("mouseleave", () => {
+            if (!isMobile()) {
+              clearTimeout(hoverTimer);
+              hideTooltip();
+              clearWave();
+            }
+          });
+
+          nodesLayer.appendChild(node);
+        });
+
+        build["sigil"] = true;
+        updateUI();
+      }
+
+      function allocatePoint(id) {
+        if (id === "sigil" || build[id]) return;
+        const skill = SKILLS[id];
+        if (totalPoints + skill.cost > MAX_POINTS) return;
+
+        let parentsUnlocked = true;
+        skill.req.forEach((parentId) => {
+          if (!build[parentId]) parentsUnlocked = false;
+        });
+
+        if (!parentsUnlocked) return;
+
+        build[id] = true;
+        totalPoints += skill.cost;
+        updateUI();
+
+        clearTimeout(hoverTimer);
+        startWave(id);
+
+        if (tooltip.style.display === "block") {
+          showTooltip(null, id, true);
+        }
+      }
+
+      function deallocatePoint(targetId) {
+        if (targetId === "sigil" || !build[targetId]) return;
+
+        let toRemove = new Set([targetId]);
+        let added = true;
+
+        while (added) {
+          added = false;
+          for (let key in build) {
+            if (build[key] && key !== "sigil" && !toRemove.has(key)) {
+              let reqs = SKILLS[key].req;
+              if (reqs.some((r) => toRemove.has(r))) {
+                toRemove.add(key);
+                added = true;
+              }
+            }
+          }
+        }
+
+        toRemove.forEach((id) => {
+          delete build[id];
+          totalPoints -= SKILLS[id].cost;
+        });
+
+        updateUI();
+        clearWave();
+
+        if (tooltip.style.display === "block") {
+          showTooltip(null, targetId, true);
+        }
+      }
+
+      function unlockAll() {
+        totalPoints = 0;
+        for (let id in SKILLS) {
+          build[id] = true;
+          if (id !== "sigil") {
+            totalPoints += SKILLS[id].cost || 0;
+          }
+        }
+        updateUI();
+      }
+
+      function resetBuild() {
+        build = { sigil: true };
+        totalPoints = 0;
+        updateUI();
+        clearWave();
+      }
+
+      function updateUI() {
+        document.getElementById("spent-points").innerText = totalPoints;
+
+        Object.keys(SKILLS).forEach((id) => {
+          const node = document.getElementById(`node-${id}`);
+          if (build[id]) node.classList.add("active");
+          else node.classList.remove("active");
+        });
+
+        document.querySelectorAll(".connection-line").forEach((line) => {
+          const parentId = line.getAttribute("data-parent");
+          const childId = line.getAttribute("data-child");
+          const parent = SKILLS[parentId];
+          const child = SKILLS[childId];
+          const isCenter = parentId === "sigil";
+
+          if (build[parentId] && build[childId]) {
+            line.style.stroke = isCenter ? child.color : parent.color;
+            line.classList.add("active-line");
+          } else {
+            line.style.stroke = "var(--line-inactive)";
+            line.classList.remove("active-line");
+          }
+        });
+
+        updateStatsPanel();
+      }
+
+      function updateStatsPanel() {
+        let totals = {};
+        let unlockedAbilitiesObj = {};
+
+        for (let id in build) {
+          if (!build[id]) continue;
+          let skill = SKILLS[id];
+
+          if (skill.stats) {
+            for (let key in skill.stats) {
+              totals[key] = (totals[key] || 0) + skill.stats[key];
+            }
+          }
+
+          if (skill.abilities) {
+            skill.abilities.forEach((ab) => {
+              if (unlockedAbilitiesObj[ab]) {
+                unlockedAbilitiesObj[ab].count++;
+              } else {
+                unlockedAbilitiesObj[ab] = { count: 1, color: skill.color };
+              }
+            });
+          }
+        }
+
+        let html = "";
+        let hasStats = Object.keys(totals).length > 0;
+
+        for (let key in totals) {
+          let val = totals[key];
+          if (key.includes("%")) {
+            let cleanKey = key.replace("%", "").trim();
+            html += `<div class="stat-line">+${val}% ${cleanKey}</div>`;
+          } else {
+            html += `<div class="stat-line">+${val} ${key}</div>`;
+          }
+        }
+
+        if (hasStats && Object.keys(unlockedAbilitiesObj).length > 0)
+          html += `<div class="stats-divider"></div>`;
+
+        for (let ab in unlockedAbilitiesObj) {
+          let info = unlockedAbilitiesObj[ab];
+          let text = ab;
+          if (info.count > 1) {
+            text += ` x${info.count}`;
+          }
+          html += `<div class="ability-line" style="color: ${info.color}">${text}</div>`;
+        }
+
+        if (!hasStats && Object.keys(unlockedAbilitiesObj).length === 0) {
+          html += `<div class="empty-stats">No bonuses.</div>`;
+        }
+
+        document.getElementById("stats-content").innerHTML = html;
+      }
+
+      let waveTimeouts = [];
+      let waveNodes = [];
+      let waveLines = [];
+
+      function startWave(startId) {
+        clearWave();
+        let queue = [{ id: startId, depth: 0, parentId: null }];
+        let visited = new Set([startId]);
+
+        while (queue.length > 0) {
+          let { id, depth, parentId } = queue.shift();
+          let nodeEl = document.getElementById(`node-${id}`);
+          let lineEl = parentId
+            ? document.getElementById(`line-${parentId}-${id}`)
+            : null;
+
+          let delay = depth * 120;
+
+          if (nodeEl) {
+            waveNodes.push(nodeEl);
+            waveTimeouts.push(
+              setTimeout(() => {
+                nodeEl.classList.add("wave-glow");
+              }, delay),
+            );
+          }
+
+          if (lineEl) {
+            waveLines.push(lineEl);
+            waveTimeouts.push(
+              setTimeout(() => {
+                lineEl.classList.add("wave-glow-line");
+              }, delay),
+            );
+          }
+
+          SKILLS[id].children.forEach((childId) => {
+            if (build[childId] && !visited.has(childId)) {
+              visited.add(childId);
+              queue.push({ id: childId, depth: depth + 1, parentId: id });
+            }
+          });
+        }
+      }
+
+      function clearWave() {
+        waveTimeouts.forEach(clearTimeout);
+        waveTimeouts = [];
+        waveNodes.forEach((el) => el.classList.remove("wave-glow"));
+        waveNodes = [];
+        waveLines.forEach((el) => el.classList.remove("wave-glow-line"));
+        waveLines = [];
+      }
+
+      function showTooltip(e, id, isRefresh = false) {
+        let skill = SKILLS[id];
+        let notEnoughPoints = totalPoints + skill.cost > MAX_POINTS;
+        let masteryColorClass = !build[id] && notEnoughPoints ? "red-text" : "";
+
+        let html = `
+        <div class="tt-row">
+          <span class="tt-key">Skill</span>
+          <span class="tt-val">${skill.name}</span>
+        </div>
+      `;
+
+        if (skill.level) {
+          html += `
+          <div class="tt-row">
+            <span class="tt-key">Level</span>
+            <span class="tt-val">${skill.level}</span>
+          </div>
+        `;
+        }
+
+        if (id !== "sigil") {
+          html += `
+          <div class="tt-row">
+            <span class="tt-key">Mastery</span>
+            <span class="tt-val ${masteryColorClass}">${skill.cost}</span>
+          </div>
+        `;
+        }
+
+        html += `
+        <div class="tt-col">
+          <span class="tt-key">Description</span>
+          <span class="tt-desc-text">${skill.desc}</span>
+        </div>
+      `;
+
+        if (skill.stats) {
+          for (let statName in skill.stats) {
+            let key = statName;
+            let val = skill.stats[statName];
+            if (key.includes("%")) {
+              key = key.replace("%", "").trim();
+              val = val + "%";
+            }
+            html += `
+            <div class="tt-row">
+              <span class="tt-key">${key}</span>
+              <span class="tt-val">${val}</span>
+            </div>
+          `;
+          }
+        }
+
+        if (isMobile()) {
+          html += `
+          <div class="tt-actions">
+            <button class="tt-btn unlock" onclick="allocatePoint('${id}')">Unlock</button>
+            <button class="tt-btn refund" onclick="deallocatePoint('${id}')">Refund</button>
+            <button class="tt-btn" onclick="hideTooltip(); clearWave();">Close</button>
+          </div>
+        `;
+        }
+
+        document.getElementById("tooltip-content").innerHTML = html;
+        tooltip.style.display = "block";
+
+        if (!isRefresh && e && !isMobile()) moveTooltip(e);
+      }
+
+      function moveTooltip(e) {
+        let x = e.clientX + 20;
+        let y = e.clientY + 20;
+        const rect = tooltip.getBoundingClientRect();
+        if (x + rect.width > window.innerWidth)
+          x = window.innerWidth - rect.width - 15;
+        if (y + rect.height > window.innerHeight)
+          y = window.innerHeight - rect.height - 15;
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+      }
+
+      function hideTooltip() {
+        tooltip.style.display = "none";
+      }
+
+      nodesLayer.addEventListener("mousemove", (e) => {
+        if (tooltip.style.display === "block" && !isMobile()) moveTooltip(e);
+      });
+
+      initTree();
+    </script>
+  </body>
+</html>
