@@ -626,7 +626,7 @@
           let dist = Math.sqrt(
             Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2),
           );
-          if (dist < 10) {
+          if (dist < 15) {
             hideTooltip();
             clearWave();
             mobileSelectedNode = null;
@@ -698,15 +698,18 @@
             let dist = Math.sqrt(
               Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2),
             );
-            if (dist < 10) {
+            if (dist < 15) {
               if (e.pointerType === "touch" || e.pointerType === "pen") {
                 if (mobileSelectedNode !== id) {
                   mobileSelectedNode = id;
                   showTooltip(e, id, false);
                   startWave(id);
                 } else {
-                  if (!build[id]) allocatePoint(id);
-                  else deallocatePoint(id);
+                  if (!build[id]) {
+                    allocatePoint(id);
+                  } else {
+                    deallocatePoint(id);
+                  }
                 }
               } else {
                 if (e.button === 0) allocatePoint(id);
@@ -787,6 +790,7 @@
           totalPoints -= SKILLS[id].cost;
         });
 
+        mobileSelectedNode = null;
         updateUI();
         clearWave();
 
@@ -958,36 +962,36 @@
         let masteryColorClass = !build[id] && notEnoughPoints ? "red-text" : "";
 
         let html = `
-      <div class="tt-row">
-        <span class="tt-key">Skill</span>
-        <span class="tt-val">${skill.name}</span>
-      </div>
-    `;
+        <div class="tt-row">
+          <span class="tt-key">Skill</span>
+          <span class="tt-val">${skill.name}</span>
+        </div>
+      `;
 
         if (skill.level) {
           html += `
-        <div class="tt-row">
-          <span class="tt-key">Level</span>
-          <span class="tt-val">${skill.level}</span>
-        </div>
-      `;
+          <div class="tt-row">
+            <span class="tt-key">Level</span>
+            <span class="tt-val">${skill.level}</span>
+          </div>
+        `;
         }
 
         if (id !== "sigil") {
           html += `
-        <div class="tt-row">
-          <span class="tt-key">Mastery</span>
-          <span class="tt-val ${masteryColorClass}">${skill.cost}</span>
-        </div>
-      `;
+          <div class="tt-row">
+            <span class="tt-key">Mastery</span>
+            <span class="tt-val ${masteryColorClass}">${skill.cost}</span>
+          </div>
+        `;
         }
 
         html += `
-      <div class="tt-col">
-        <span class="tt-key">Description</span>
-        <span class="tt-desc-text">${skill.desc}</span>
-      </div>
-    `;
+        <div class="tt-col">
+          <span class="tt-key">Description</span>
+          <span class="tt-desc-text">${skill.desc}</span>
+        </div>
+      `;
 
         if (skill.stats) {
           for (let statName in skill.stats) {
@@ -998,29 +1002,20 @@
               val = val + "%";
             }
             html += `
-          <div class="tt-row">
-            <span class="tt-key">${key}</span>
-            <span class="tt-val">${val}</span>
-          </div>
-        `;
-          }
-        }
-
-        if (skill.abilities) {
-          skill.abilities.forEach((ab) => {
-            html += `
             <div class="tt-row">
-              <span class="tt-key">Ability</span>
-              <span class="tt-val" style="color: ${skill.color}; font-weight: bold;">${ab}</span>
+              <span class="tt-key">${key}</span>
+              <span class="tt-val">${val}</span>
             </div>
           `;
-          });
+          }
         }
 
         document.getElementById("tooltip-content").innerHTML = html;
         tooltip.style.display = "block";
 
-        if (!isRefresh && e) moveTooltip(e);
+        if (!isRefresh && e) {
+          moveTooltip(e);
+        }
       }
 
       function moveTooltip(e) {
@@ -1038,6 +1033,11 @@
       function hideTooltip() {
         tooltip.style.display = "none";
       }
+
+      nodesLayer.addEventListener("pointermove", (e) => {
+        if (tooltip.style.display === "block" && e.pointerType === "mouse")
+          moveTooltip(e);
+      });
 
       nodesLayer.addEventListener("pointermove", (e) => {
         if (tooltip.style.display === "block" && e.pointerType === "mouse")
