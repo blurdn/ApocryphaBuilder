@@ -1105,7 +1105,6 @@ const SKILLS = {
     req: ["prowess_b"],
     color: "#32717e",
     desc: "Increases magicka regeneration rate.",
-    level: "???",
     stats: { "Magicka Regeneration %": 25 },
   },
   flux_b: {
@@ -1116,7 +1115,6 @@ const SKILLS = {
     req: ["flux_a"],
     color: "#32717e",
     desc: "Increases magicka regeneration rate.",
-    level: "???",
     stats: { "Magicka Regeneration %": 25 },
   },
   flux_y: {
@@ -1127,7 +1125,6 @@ const SKILLS = {
     req: ["flux_b"],
     color: "#32717e",
     desc: "Increases magicka regeneration rate.",
-    level: "???",
     stats: { "Magicka Regeneration %": 25 },
   },
 
@@ -1139,7 +1136,6 @@ const SKILLS = {
     req: ["prowess_b"],
     color: "#245a4f",
     desc: "Increases resistance to fire and magic.",
-    level: "???",
     stats: { "Fire Resistance %": 14, "Magical Defense %": 5 },
   },
   ward_b: {
@@ -1150,7 +1146,6 @@ const SKILLS = {
     req: ["ward_a"],
     color: "#245a4f",
     desc: "Increases resistance to fire and magic.",
-    level: "???",
     stats: { "Fire Resistance %": 14, "Magical Defense %": 5 },
   },
   ward_c: {
@@ -1161,7 +1156,6 @@ const SKILLS = {
     req: ["ward_b"],
     color: "#245a4f",
     desc: "Increases resistance to fire and magic.",
-    level: "???",
     stats: { "Fire Resistance %": 14, "Magical Defense %": 5 },
   },
 
@@ -1218,8 +1212,8 @@ const SKILLS = {
     cost: 2,
     req: ["mana_body_a", "ward_b"],
     color: "#245a4f",
-    desc: "Nil",
-    level: "???",
+    desc: "Press E above 80% Magicka to spend 80% and mantle your arms in mana, enhancing weapon damage and allowing spellshielding without charging mana. Charge back to 80% and press E again to turn it off.",
+    level: 40,
     abilities: ["Mana Body"],
   },
 
