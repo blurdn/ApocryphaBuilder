@@ -1029,7 +1029,8 @@ const SKILLS = {
     cost: 2,
     req: ["phase_run_b", "flux_b"],
     color: "#32717e",
-    desc: "Nil",
+    desc: "Double-click Q with Arcana to empower your Dash.",
+    level: 30,
     abilities: ["Phase Dash"],
   },
 
