@@ -1167,6 +1167,7 @@ const SKILLS = {
     req: ["prowess_e", "flux_y", "ward_c"],
     color: "#348585",
     desc: "Your next mage skill autocasts and ignores the global spell lockout.",
+    level: 40,
     stats: { "Magical Damage %": 5 },
   },
 
