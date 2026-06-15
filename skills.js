@@ -187,7 +187,7 @@ const SKILLS = {
     cost: 1,
     req: ["unyielding_a"],
     color: "#5e5a25",
-    desc: "If you are hit during a move, ignore that stun once.",
+    desc: "!!!UNOBTAINABLE!!!<br><br>If you are hit during a move, ignore that stun once.",
     abilities: ["Unyielding"],
   },
 
@@ -498,7 +498,7 @@ const SKILLS = {
     cost: 1,
     req: ["perception_d"],
     color: "#762c4c",
-    desc: "Your weapon attacks now inflict anti-heal for 8 seconds, nullifying your opponents healing.",
+    desc: "!!!UNOBTAINABLE!!!<br><br>Your weapon attacks now inflict anti-heal for 8 seconds, nullifying your opponents healing.",
     abilities: ["Deep Wound"],
   },
 
@@ -768,7 +768,7 @@ const SKILLS = {
     cost: 2,
     req: ["prof_e"],
     color: "#542e7b",
-    desc: "Nil",
+    desc: "!!!UNOBTAINABLE!!!<br><br>Nil",
     level: "???",
     abilities: ["Compromised Guard"],
   },
