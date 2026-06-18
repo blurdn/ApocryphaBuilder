@@ -687,7 +687,7 @@ const SKILLS = {
     abilities: ["Phase Reflex"],
   },
   phase_b: {
-    name: "Phase Reflex α",
+    name: "Phase Reflex β",
     x: 15,
     y: 5,
     cost: 2,
