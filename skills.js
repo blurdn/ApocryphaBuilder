@@ -187,7 +187,7 @@ const SKILLS = {
     cost: 1,
     req: ["unyielding_a"],
     color: "#5e5a25",
-    desc: "!!!UNOBTAINABLE!!!<br><br>If you are hit during a move, ignore that stun once.",
+    desc: "If you are hit during a move, ignore that stun once.",
     abilities: ["Unyielding"],
   },
 
