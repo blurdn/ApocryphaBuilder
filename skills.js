@@ -185,7 +185,7 @@ const SKILLS = {
     x: -12,
     y: 8,
     cost: 1,
-    req: ["unyielding_a"],
+    req: ["unyielding_a", "sturdy_d"],
     color: "#5e5a25",
     desc: "If you are hit during a move, ignore that stun once.",
     abilities: ["Unyielding"],
